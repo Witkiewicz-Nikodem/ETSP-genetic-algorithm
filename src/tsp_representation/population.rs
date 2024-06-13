@@ -13,7 +13,6 @@ use super::node::*;
 pub struct Population{
     population: Vec<Genome>,
     len: usize,
-    genome_len: usize,
     number_of_crossovers: u32,
     number_of_mutations: u32,
     number_of_mutated_genoms: u32,
@@ -73,8 +72,8 @@ impl Population{
         crossover_start: usize,
         crossover_end: usize) -> Self
         {
-            let (genome_len, len) = match same_len(&population){
-                true => (population[0].get_len(), population.len()),
+            let len = match same_len(&population){
+                true => population.len(),
                 false => panic!{"provided genoms have different lenghts"}
             };
 
@@ -86,7 +85,7 @@ impl Population{
                 panic!{"provided bigger number_of_mutated_genoms than it is posible"};
             }
 
-            Population{population, len, genome_len, number_of_crossovers, number_of_mutations, number_of_mutated_genoms, crossover_begin_range: crossover_start, crossover_end_range: crossover_end}
+            Population{population, len, number_of_crossovers, number_of_mutations, number_of_mutated_genoms, crossover_begin_range: crossover_start, crossover_end_range: crossover_end}
         }
 
 
