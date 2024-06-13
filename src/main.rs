@@ -4,6 +4,7 @@ use tsp_representation::*;
 use itertools::*;
 use std::env;
 use std::str::FromStr;
+use std::time::Instant;
 
 mod tsp_representation;
 
@@ -49,7 +50,7 @@ fn main() {
     let brute_force = komiwojazer.get_best();
 
     println!("genetycznie");
-    etsp_by_iteration(komiwojazer, 100000);
+    etsp_by_genetic_algoritm(komiwojazer, 100000);
 
     println!("=======================================");
     println!("\n\nbrute force");
@@ -58,22 +59,23 @@ fn main() {
 }
 
 
-fn etsp_by_iteration(mut population: Population, n: u128){
-    println!("populacja poczatkowa");
+fn etsp_by_genetic_algoritm(mut population: Population, n: u128){
+    println!("initial population");
     println!("{}",population.as_string_with_fitnes());
 
-    println!("najlepszy znaleziony genom: ");
+    println!("best genom of initial population: ");
     println!("{}",population.get_best().as_string_with_fitnes());
-    for i in 0..n{
+
+    let start = Instant::now();
+    for _ in 0..n{
         population.round();
-        if i % 10000 == 0{
-            println!("i = {:?}", i);
-        }
     }
-    println!("populacja koncowa");
+    let elapsed = start.elapsed();
+    println!("elapsed time: , {:?}", elapsed);
+    println!("final population");
     println!("{}",population.as_string_with_fitnes());
     
-    println!("najlepszy znaleziony genom: ");
+    println!("best genom of final population: ");
     println!("{}",population.get_best().as_string_with_fitnes());
 }
 
@@ -84,16 +86,17 @@ fn etsp_by_brute_force(genome: Genome){
 
 
     let permutations = g.iter().permutations(g.len());
+    let start = Instant::now();
     permutations.for_each(|x|{
         if result > fitness_f(x.clone()) {
             result_perm = x.clone();
             result = fitness_f(x);
         }
     });
-
-    println!("po ");
-    println!("{:?}", result_perm);
-    println!("{:?}", result);
+    let elapsed = start.elapsed();
+    println!("elapsed time: {:?} ", elapsed);
+    println!("genome: {:?}", result_perm);
+    println!("length: {:?}", result);
 }
 
 
