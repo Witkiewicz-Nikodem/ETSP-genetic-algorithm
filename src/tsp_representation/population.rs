@@ -1,10 +1,6 @@
-use crate::tsp_representation::population;
-use float_cmp::{approx_eq, Ulps};
 use rand::distributions::{Distribution, Uniform};
 use rand::prelude::*;
-use itertools::Itertools;
-
-use super::genome::{self, crossover_2ofsprings, same_len, Genome};
+use super::genome::{ crossover_2ofsprings, same_len, Genome};
 use super::node::*;
 // population is created of points on Cartesian coordinate system but only on positive quadrant (x >= 0 and y >= 0).
 // in random generation it is necessary to provide min and max value for both x and y. They are generated on rectangle x in <min,max> X y in <min,max>
@@ -160,6 +156,7 @@ impl Population{
         self.population = self.population[0..self.len].to_vec();
     }
 
+    #[allow(dead_code)]
     pub fn as_string(&self) -> String {
         let mut result = String::from("Population: \n===========================================================================================================================\n");
         self.population.iter().for_each(|x|{
@@ -272,7 +269,8 @@ fn new_validation_no_panic(){
 
 #[test]
 fn test_determine_roulete(){
-    let population = given_Population();
+    use float_cmp::approx_eq;
+    let population = given_population();
     let roulete = determine_roulete(&population.population);
     let counted_result_1: Vec<f64> = vec![8.0/24.0, 18.0/24.0, 24.0/24.0];
     let mut equal = true;
@@ -287,7 +285,7 @@ fn test_determine_roulete(){
 #[test]
 
 fn test_take_index_from_roulete(){
-    let population = given_Population();
+    let population = given_population();
     let roulete = determine_roulete(&population.population);
     let index_0 = take_index_from_roulete(&roulete, 0.1);
     let index_1 = take_index_from_roulete(&roulete, 0.4);
@@ -299,7 +297,7 @@ fn test_take_index_from_roulete(){
 
 #[test]
 fn pick_crossovers(){
-    let population = given_Population(); 
+    let population = given_population(); 
     for _ in 1..1000{
         let parents = population.pick_crossovers();
         assert_eq!(parents[0].0 == parents[0].1, false);
@@ -308,7 +306,7 @@ fn pick_crossovers(){
 
 #[test]
 fn test_crossover_2ofsprings(){ // the test sometimes will fail becouse of randomistaion. It can create offsprings whcich actualy exist in population, then they are not added, so popolutation stay the same.
-    let mut population = given_Population_long(); 
+    let mut population = given_population_long(); 
     let len_before = population.population.len();
     population.crossover_2ofsprings();
     
@@ -317,7 +315,7 @@ fn test_crossover_2ofsprings(){ // the test sometimes will fail becouse of rando
 
 #[test]
 fn reduce(){
-    let mut population = given_Population(); 
+    let mut population = given_population(); 
     let len_before = population.population.len();
     population.crossover_2ofsprings();
     population.reduce();
@@ -326,17 +324,18 @@ fn reduce(){
 
 #[test]
 fn as_string(){
-    let mut population = given_Population();
+    let population = given_population();
     assert_eq!(population.as_string(),"Population: \n===========================================================================================================================\nGenome: (1 , 1) | (1 , 4) | (1 , 2) | (1 , 3) | \nGenome: (1 , 4) | (1 , 1) | (1 , 3) | (1 , 1) | \nGenome: (1 , 1) | (1 , 2) | (1 , 3) | (1 , 4) | \n")
 }
 
 #[test]
 fn as_string_with_fitnes(){
-    let mut population = given_Population();
+    let population = given_population();
     assert_eq!(population.as_string_with_fitnes(),"Population: \n===========================================================================================================================\nGenome: (1 , 1) | (1 , 4) | (1 , 2) | (1 , 3) | => 8\nGenome: (1 , 4) | (1 , 1) | (1 , 3) | (1 , 1) | => 10\nGenome: (1 , 1) | (1 , 2) | (1 , 3) | (1 , 4) | => 6\n")
 }
 
-fn given_Population() -> Population{
+#[allow(dead_code)]
+fn given_population() -> Population{
     let _1 = Node::new(1.0,1.0);
     let _2 = Node::new(1.0,2.0);
     let _3 = Node::new(1.0,3.0);
@@ -350,8 +349,8 @@ fn given_Population() -> Population{
     let genoms: Vec<Genome> = vec![parent_1,parent_2,parent_3];
     Population::new(genoms, 1, 1, 1, 1, 2)
 } 
-
-fn given_Population_long() -> Population{
+#[allow(dead_code)]
+fn given_population_long() -> Population{
     let _1 = Node::new(1.0,1.0);
     let _2 = Node::new(1.0,2.0);
     let _3 = Node::new(1.0,3.0);
