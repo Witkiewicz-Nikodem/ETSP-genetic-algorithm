@@ -1,6 +1,5 @@
 use rand::distributions::{Distribution, Uniform};
 
-
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Node{
     x: f64,
@@ -19,6 +18,7 @@ impl Node {
         Node{x: x as f64, y: y as f64}
     }
 
+    
     pub fn new(x: f64, y: f64) -> Self{
         Node{x,y}
     }
