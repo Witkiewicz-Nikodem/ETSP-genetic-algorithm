@@ -1,4 +1,4 @@
-use genome::{crossover_2ofsprings, fitness_f, Genome};
+use genome::{fitness_f, Genome};
 use population::Population;
 use tsp_representation::*;
 use itertools::*;
@@ -78,7 +78,7 @@ fn etsp_by_iteration(mut population: Population, n: u128){
 }
 
 fn etsp_by_brute_force(genome: Genome){
-    let mut g = genome.get_nodes().clone();
+    let g = genome.get_nodes().clone();
     let mut result = genome.fitness_f();
     let mut result_perm = vec![];
 
