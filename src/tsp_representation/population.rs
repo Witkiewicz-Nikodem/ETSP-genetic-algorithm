@@ -5,7 +5,7 @@ use super::node::*;
 // population is created of points on Cartesian coordinate system but only on positive quadrant (x >= 0 and y >= 0).
 // in random generation it is necessary to provide min and max value for both x and y. They are generated on rectangle x in <min,max> X y in <min,max>
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Population{
     population: Vec<Genome>,
     len: usize,

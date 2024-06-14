@@ -9,6 +9,9 @@ use sysinfo::*;
 mod tsp_representation;
 
 fn main() {
+    let MiB = (2.0 as f64).powf(20.0);
+    let genetic_iteration;
+
     let population_len;
     let genome_len;
     let min;
@@ -30,6 +33,7 @@ fn main() {
         number_of_mutated_genoms,
         crossover_start,
         crossover_end,
+        genetic_iteration
     ) = match args.len() {
         10 =>
             (
@@ -41,30 +45,59 @@ fn main() {
             parse(&args[6]),
             parse(&args[7]),
             parse(&args[8]),
-            parse(&args[9])
+            parse(&args[9]),
+            parse(&args[10])
             ),
-        _ => (20,20,0,100,2,2,2,3,6)
+        _ => (10,8,0,100,2,2,2,1,3,100000)
     };
 
     let mut sys = System::new_all();
     sys.refresh_memory();
     let pid = sysinfo::get_current_pid().expect("Failed to get PID");
 
+    //==============================================//
+    //              memory measurmet                //
+    //==============================================//
+    println!("-----------------------------------------------------------");
+    println!("measure memory");
 
     let komiwojazer = Population::new_random(population_len, genome_len, min, max, number_of_crossovers, number_of_mutations, number_of_mutated_genoms, crossover_start, crossover_end);
+    // measurment time exactly before brute force problem init.
+    // its is important, becouse brute_force_memory(...) shows program memory used in execution
+    let mem;
+    sys.refresh_memory();
+    if let Some(process) = sys.process(pid){
+        mem = process.memory();
+    }else {
+        mem = 0;
+    }
+    
+    println!("\nbrute force");
+    println!("memory usage before brute force: {:?}", mem as f64 /MiB);
     let brute_force = komiwojazer.get_best();
+    brute_force_memory(brute_force.clone(), &mut sys);
 
-    //println!("genetic");
-    //etsp_by_genetic(komiwojazer, 100000);
-//
-    //println!("=======================================");
-    //println!("\n\nbrute force");
-    //etsp_by_brute_force(brute_force);
 
-    //println!("genetic");
-    //etsp_by_genetic_memory(komiwojazer, 100000);
-    println!("\n\nbrute force");
-    brute_force_memory(brute_force, &mut sys);
+    // measurment time exactly before genetic problem init.
+    // after memory measurment the komiwojazer struct is cloned to be included in results.
+    // its is important, becouse brute_force_memory(...) shows program memory used in execution
+    sys.refresh_memory();
+    let komiwojazer_mem = komiwojazer.clone();
+    println!("\ngenetic");
+    println!("memory usage before genetic: {:?}", mem as f64 /MiB);
+    etsp_by_genetic_memory(komiwojazer_mem, genetic_iteration, &mut sys);
+
+    //==============================================//
+    //                Time measurmet                //
+    //==============================================//
+    println!("\n-----------------------------------------------------------");
+    println!("measure time");
+
+    println!("\nbrute force");
+    etsp_by_brute_force(brute_force);
+
+    println!("\ngenetic");
+    etsp_by_genetic(komiwojazer, genetic_iteration)
 }
 
 #[allow(dead_code)]
@@ -123,32 +156,27 @@ fn etsp_by_brute_force(genome: Genome){
 #[allow(non_snake_case)]
 fn etsp_by_genetic_memory(mut population: Population, n: u128, sys: &mut System){
 
-    sys.refresh_all();
+    sys.refresh_memory();
     let pid = sysinfo::get_current_pid().expect("Failed to get PID");
 
     let mut memory_min; 
     let mut memory_max;
     let mut memory_avg;
     let MiB = (2.0 as f64).powf(20.0);
-
+    sys.refresh_memory();
     if let Some(process) = sys.process(pid){
         let mem = process.memory();
         memory_min = mem;
         memory_max = mem;
         memory_avg = 0;
     }else {
-        memory_min = 0;
-        memory_max = 0;
-        memory_avg = 0;
+        panic!("couldnt read process data");
     }
 
-
-    println!("min: {:?} MiB", memory_min as f64 / MiB);
-    println!("max: {:?} MiB", memory_max as f64 / MiB);
-    println!("avg: {:?} MiB", memory_avg as f64 / (n  as f64 * MiB));
     for _ in 0..n{
         population.round();
 
+        sys.refresh_memory();
         if let Some(process) = sys.process(pid){
             let mem = process.memory();
             if mem > memory_min{
@@ -161,14 +189,14 @@ fn etsp_by_genetic_memory(mut population: Population, n: u128, sys: &mut System)
             memory_avg += mem;
         }
     }
-    println!("min: {:?} MiB", memory_min as f64 / MiB);
-    println!("max: {:?} MiB", memory_max as f64 / MiB);
-    println!("avg: {:?} MiB", memory_avg as f64 / (n  as f64 * MiB));
+    println!("memory usage:");
+    println!("min: {:?} MiB", (memory_min) as f64 / MiB);
+    println!("max: {:?} MiB", (memory_max) as f64 / MiB);
+    println!("avg: {:?} MiB", (memory_avg as f64 / (n  as f64) as f64)/ MiB);
 }
 
 #[allow(non_snake_case)]
 fn brute_force_memory(genome: Genome, sys: &mut System){
-    sys.refresh_all();
     let pid = sysinfo::get_current_pid().expect("Failed to get PID");
 
     let mut memory_min; 
@@ -176,13 +204,6 @@ fn brute_force_memory(genome: Genome, sys: &mut System){
     let mut memory_avg;
     let MiB = (2.0 as f64).powf(20.0);
     let len = factorial(genome.get_len());
-
-    let runtime_env_mem;
-    if let Some(process) = sys.process(pid){
-        runtime_env_mem = process.memory();
-    }else {
-        runtime_env_mem = 0;
-    }
     
     let g = genome.get_nodes().clone();
     let mut result = genome.fitness_f();
@@ -190,29 +211,23 @@ fn brute_force_memory(genome: Genome, sys: &mut System){
 
 
     let permutations = g.iter().permutations(g.len());
-    
+
+    sys.refresh_memory();
     if let Some(process) = sys.process(pid){
         let mem = process.memory();
         memory_min = mem;
         memory_max = mem;
         memory_avg = 0;
     }else {
-        memory_min = 0;
-        memory_max = 0;
-        memory_avg = 0;
+        panic!("couldnt read process data");
     }
-
-    println!("data after init before execution solution code minus runtime env memory");
-    println!("min: {:?} MiB", (memory_min - runtime_env_mem) as f64 / MiB);
-    println!("max: {:?} MiB", (memory_max - runtime_env_mem) as f64 / MiB);
-    println!("avg: {:?} MiB", (memory_avg - runtime_env_mem) as f64 / (len * MiB));
 
     permutations.for_each(|x|{
         if result > fitness_f(x.clone()) {
             result_perm = x.clone();
             result = fitness_f(x);
         }
-
+        sys.refresh_memory();
         if let Some(process) = sys.process(pid){
             let mem = process.memory();
             if mem > memory_min{
@@ -226,10 +241,12 @@ fn brute_force_memory(genome: Genome, sys: &mut System){
         }
     });
 
-    println!("data after execution soultion code minus runtime env memory");
-    println!("min: {:?} MiB", (memory_min - runtime_env_mem) as f64 / MiB);
-    println!("max: {:?} MiB", (memory_max - runtime_env_mem) as f64 / MiB);
-    println!("avg: {:?} MiB", (memory_avg - runtime_env_mem) as f64 / (len * MiB));
+
+
+    println!("memory usage: ");
+    println!("min: {:?} MiB", (memory_min) as f64 / MiB);
+    println!("max: {:?} MiB", (memory_max) as f64 / MiB);
+    println!("avg: {:?} MiB", (memory_avg) as f64 / len / MiB);
 }
 
 
